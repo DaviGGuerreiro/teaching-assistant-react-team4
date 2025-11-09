@@ -39,21 +39,25 @@ const App: React.FC = () => {
       setError('');
       const classesData = await ClassService.getAllClasses();
       setClasses(classesData);
-      
-      // Update selectedClass if it exists to reflect new enrollments
-      if (selectedClass) {
-        const updatedSelectedClass = classesData.find(c => 
-          c.topic === selectedClass.topic && 
-          c.year === selectedClass.year && 
-          c.semester === selectedClass.semester
-        );
-        if (updatedSelectedClass) {
-          setSelectedClass(updatedSelectedClass);
-        }
-      }
+      return classesData;
     } catch (err) {
       setError('Failed to load classes. Please try again.');
       console.error('Error loading classes:', err);
+      return [];
+    }
+  }, []);
+
+  const updateSelectedClass = useCallback((classesData: Class[]) => {
+    // Update selectedClass if it exists to reflect new enrollments
+    if (selectedClass) {
+      const updatedSelectedClass = classesData.find(c => 
+        c.topic === selectedClass.topic && 
+        c.year === selectedClass.year && 
+        c.semester === selectedClass.semester
+      );
+      if (updatedSelectedClass) {
+        setSelectedClass(updatedSelectedClass);
+      }
     }
   }, [selectedClass]);
 
@@ -63,14 +67,16 @@ const App: React.FC = () => {
     loadClasses();
   }, [loadStudents, loadClasses]);
 
-  const handleStudentAdded = () => {
+  const handleStudentAdded = async () => {
     loadStudents(); // Reload the list when a new student is added
-    loadClasses(); // Also reload classes to update enrollment info
+    const updatedClasses = await loadClasses(); // Also reload classes to update enrollment info
+    updateSelectedClass(updatedClasses); // Update selected class with new data
   };
 
-  const handleStudentDeleted = () => {
+  const handleStudentDeleted = async () => {
     loadStudents(); // Reload the list when a student is deleted
-    loadClasses(); // Also reload classes to update enrollment info
+    const updatedClasses = await loadClasses(); // Also reload classes to update enrollment info
+    updateSelectedClass(updatedClasses); // Update selected class with new data
   };
 
   const handleStudentUpdated = () => {

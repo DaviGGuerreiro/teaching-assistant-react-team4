@@ -14,6 +14,11 @@
       "name": "João Elegância",
       "cpf": "33333333333",
       "email": "je@cin.ufpe.br"
+    },
+    {
+      "name": "Joana Refatoração",
+      "cpf": "55555555555",
+      "email": "jr@gmail.com"
     }
   ],
   "classes": [
@@ -48,6 +53,35 @@
             {
               "goal": "Refactoring",
               "grade": "MA"
+            }
+          ]
+        },
+        {
+          "studentCPF": "55555555555",
+          "evaluations": [
+            {
+              "goal": "Requirements",
+              "grade": "MANA"
+            },
+            {
+              "goal": "Configuration Management",
+              "grade": "MPA"
+            },
+            {
+              "goal": "Project Management",
+              "grade": "MPA"
+            },
+            {
+              "goal": "Design",
+              "grade": "MA"
+            },
+            {
+              "goal": "Refactoring",
+              "grade": "MA"
+            },
+            {
+              "goal": "Tests",
+              "grade": "MPA"
             }
           ]
         }
