@@ -5,6 +5,7 @@ import { Student } from './models/Student';
 import { Evaluation } from './models/Evaluation';
 import { Classes } from './models/Classes';
 import { Class } from './models/Class';
+import { Scripts } from './models/Scritps';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -25,7 +26,7 @@ app.use(express.json());
 const studentSet = new StudentSet();
 const classes = new Classes();
 const dataFile = path.resolve('./data/app-data.json');
-const scripts: any[] = [];
+const scripts = new Scripts();
 
 // Persistence functions
 const ensureDataDirectory = (): void => {
@@ -457,23 +458,25 @@ app.listen(PORT, () => {
 
 //POST /api/scripts - Create a new script
 app.post('/api/scripts', (req: Request, res: Response) => {
-  const script = { id: Date.now().toString(), ...req.body };
-  scripts.push(script);
+  const script = scripts.addScript(req.body);
   res.status(201).json(script);
 });
 
-//GET /api/scripts - Get all scripts
-app.get('/api/scripts', (req: Request, res: Response) => {
-  res.json(scripts);
+//GET /api/scripts/:id - Get one script by ID
+app.get('/api/scripts/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const script = scripts.findById(id);
+  if (!script) {
+    return res.status(404).json({ error: 'Script not found' });
+  }
+  res.json(script.toJSON());
 });
 
 //PUT /api/scripts/:id - Update a script
 app.put('/api/scripts/:id', (req: Request, res: Response) => {
   const { id } = req.params;
-  const index = scripts.findIndex(r => r.id === id);
+  const script = scripts.updateScript(id, req.body);
 
-  if (index === -1) return res.status(404).json({ error: 'Script not found' });
-
-  scripts[index] = { ...scripts[index], ...req.body };
-  res.json(scripts[index]);
+  if (!script) return res.status(404).json({ error: 'Script not found' });
+  res.json(script.toJSON());
 });
