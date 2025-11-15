@@ -25,6 +25,7 @@ app.use(express.json());
 const studentSet = new StudentSet();
 const classes = new Classes();
 const dataFile = path.resolve('./data/app-data.json');
+const scripts: any[] = [];
 
 // Persistence functions
 const ensureDataDirectory = (): void => {
@@ -451,4 +452,28 @@ app.post('/api/classes/gradeImport/:classId', upload_dir.single('file'), async (
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+});
+
+
+//POST /api/scripts - Create a new script
+app.post('/api/scripts', (req: Request, res: Response) => {
+  const script = { id: Date.now().toString(), ...req.body };
+  scripts.push(script);
+  res.status(201).json(script);
+});
+
+//GET /api/scripts - Get all scripts
+app.get('/api/scripts', (req: Request, res: Response) => {
+  res.json(scripts);
+});
+
+//PUT /api/scripts/:id - Update a script
+app.put('/api/scripts/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const index = scripts.findIndex(r => r.id === id);
+
+  if (index === -1) return res.status(404).json({ error: 'Script not found' });
+
+  scripts[index] = { ...scripts[index], ...req.body };
+  res.json(scripts[index]);
 });
