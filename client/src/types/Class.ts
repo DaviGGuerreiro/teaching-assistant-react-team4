@@ -1,3 +1,4 @@
+import { DefMedia } from './DefMedia';
 import { Enrollment } from './Enrollment';
 
 export interface Class {
@@ -5,6 +6,7 @@ export interface Class {
   topic: string;
   semester: number;
   year: number;
+  defMedia: DefMedia;
   enrollments: Enrollment[];
 }
 
@@ -12,6 +14,7 @@ export interface CreateClassRequest {
   topic: string;
   semester: number;
   year: number;
+  defMedia: DefMedia;
 }
 
 export interface UpdateClassRequest {
