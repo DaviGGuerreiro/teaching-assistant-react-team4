@@ -455,6 +455,39 @@ app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 
+app.get('/api/enrollments/:enrolmentsId/scripts/:scriptId/current_question', (req: Request, res: Response) => {
+  const { enrollmentId, scriptId } = req.params;
+  //const currentQuestion = script.getCurrentQuestion(enrollmentId, scriptId);
+  res.status(201).json(scripts);
+})
+
+app.post('/api/enrollments/:enrollmentId/scripts/:scriptId/questions/:questionId/answer', (req: Request, res: Response) => {
+  const { enrollmentId, scriptId, questionId } = req.params;
+  const { fillTime, checkedAlternatives } = req.body;
+  /*const saved = answer.saveAnswer({
+    enrollmentId,
+    scriptId,
+    questionId,
+    fillTime,
+    checkedAlternatives
+  });*/
+  res.status(201).json({
+    message: "Resposta salva com sucesso",
+    //saved
+  });
+});
+
+app.get('/api/enrollments/:enrolmentsId/scripts/:scriptId/questions/:questionId/next', (req: Request, res: Response) => {
+  const { enrollmentId, scriptId, questionId } = req.params;
+  //const next = script.nextQuestion(enrollmentId, scriptId, questionId);
+  //res.status(200).json(next);
+});
+
+app.get('/api/enrollments/:enrolmentsId/scripts/:scriptId/end', (req: Request, res: Response) => {
+  const { enrollmentId, scriptId, questionId } = req.params;
+  //const result = script.finishScript(enrollmentId, scriptId);
+  //res.status(200).json({message: "Roteiro Concluído", result})
+})
 
 //POST /api/scripts - Create a new script
 app.post('/api/scripts', (req: Request, res: Response) => {
@@ -480,3 +513,9 @@ app.put('/api/scripts/:id', (req: Request, res: Response) => {
   if (!script) return res.status(404).json({ error: 'Script not found' });
   res.json(script.toJSON());
 });
+
+/*app.get('/api/scripts/:scriptsId/deadline', (req: Request, res: Response) => {
+  const script = scripts.addScript(req.body);
+  res.status(201).json(script);
+});
+*/
