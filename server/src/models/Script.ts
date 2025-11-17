@@ -1,12 +1,16 @@
+import { Question } from './Question';
+
 export class Script {
   private id: string;
   public title?: string;
-  public content?: any;
+  public description?: string;
+  public questions: Question[];
 
-  constructor(id: string, title?: string, content?: any) {
+  constructor(id: string, title?: string, description?: string, questions: Question[] = []) {
     this.id = id;
     this.title = title;
-    this.content = content;
+    this.description = description;
+    this.questions = questions;
   }
 
   getId(): string {
@@ -17,16 +21,17 @@ export class Script {
     return {
       id: this.id,
       title: this.title,
-      content: this.content
+      description: this.description,
+      questions: this.questions,
     };
   }
 
-  update(data: Partial<{ title: any; content: any }>) {
+  update(data: Partial<{ title: any; description: any }>) {
     if (data.title !== undefined) this.title = data.title;
-    if (data.content !== undefined) this.content = data.content;
+    if (data.description !== undefined) this.description = data.description;
   }
 
   static fromJSON(obj: any): Script {
-    return new Script(obj.id, obj.title, obj.content);
+    return new Script(obj.id, obj.title, obj.description, obj.questions);
   }
 }

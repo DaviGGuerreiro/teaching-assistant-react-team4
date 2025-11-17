@@ -1,7 +1,10 @@
+import {Question} from './Question'
 export interface Script {
   id: string;
   title?: string;
-  content?: any;
+  //content?: any;
+  description?: string;
+  questions: Question[];
 }
 
 export interface CreateScriptRequest {
