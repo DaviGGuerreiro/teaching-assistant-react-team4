@@ -5,7 +5,7 @@ export class TaskSet {
 
   addTask(data: any): Task {
     const id = data.id ?? Date.now().toString();
-    const task = new Task(id, data.statement, data.attachments);
+    const task = new Task(id, data.statement);
     this.items.push(task);
     return task;
   }
