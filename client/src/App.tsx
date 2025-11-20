@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import Classes from './components/Classes';
 import Evaluations from './components/Evaluations';
-import Scripts from './components/Scripts';
+import ScriptsPage from './components/scripts/ScriptsPage';
 import StudentForm from './components/StudentForm';
 import StudentList from './components/StudentList';
 import ClassService from './services/ClassService';
@@ -221,7 +221,7 @@ const App: React.FC = () => {
           )}
 
           {activeTab === 'scripts' && (
-            <Scripts onError={handleError} />
+            <ScriptsPage onError={handleError} />
           )}
         </div>
       </main>

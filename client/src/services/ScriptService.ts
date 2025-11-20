@@ -18,6 +18,15 @@ class ScriptService {
     return await res.json();
   }
 
+  async getAllScripts(): Promise<Script[]> {
+    const res = await fetch(this.baseUrl);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to load scripts: ${res.statusText}`);
+    }
+    return await res.json();
+  }
+
   async getScriptById(id: string): Promise<Script> {
     const res = await fetch(`${this.baseUrl}/${encodeURIComponent(id)}`);
     if (!res.ok) {

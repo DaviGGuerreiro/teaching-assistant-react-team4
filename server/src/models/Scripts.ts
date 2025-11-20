@@ -1,14 +1,20 @@
 import { Script } from './Script';
+import { Task } from './Task';
 
 export class Scripts {
   private items: Script[] = [];
 
-  addScript(data: any): Script {
-    const id = data.id ?? Date.now().toString();
-    const script = new Script(id, data.title, data.content);
-    this.items.push(script);
-    return script;
+addScript(data: any): Script {
+  const id = data.id ?? Date.now().toString();
+  const script = new Script(id, data.title);
+
+  if (Array.isArray(data.tasks)) {
+    script.tasks = data.tasks.map((t: any) => Task.fromJSON(t));
   }
+
+  this.items.push(script);
+  return script;
+}
 
   getAllScripts(): Script[] {
     return this.items;
