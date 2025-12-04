@@ -11,6 +11,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { EspecificacaoDoCalculoDaMedia, DEFAULT_ESPECIFICACAO_DO_CALCULO_DA_MEDIA } from './models/EspecificacaoDoCalculoDaMedia';
 import {TaskSet} from './models/TaskSet'
+import { ScriptAnswerSet } from './models/ScriptAnswerSet';
+
 
 // usado para ler arquivos em POST
 const multer = require('multer');
@@ -31,6 +33,7 @@ const classes = new Classes();
 const dataFile = path.resolve('./data/app-data.json');
 const scripts = new Scripts();
 const taskset = new TaskSet();
+const scriptAnswerSet = new ScriptAnswerSet();
 
 // Persistence functions
 const ensureDataDirectory = (): void => {
@@ -599,4 +602,61 @@ app.put('/api/scripts/:id', (req: Request, res: Response) => {
 
   if (!script) return res.status(404).json({ error: 'Script not found' });
   res.json(script.toJSON());
+});
+
+
+app.post('/api/scriptAnswers', (req: Request, res: Response) => {
+  try {
+    const newAnswer = scriptAnswerSet.addScriptAnswer(req.body);
+    res.status(201).json(newAnswer);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/scriptAnswers', (req: Request, res: Response) => {
+  try {
+    res.json(scriptAnswerSet.getAll());
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch script answers' });
+  }
+});
+
+
+app.get('/api/scriptAnswers/student/:studentId', (req: Request, res: Response) => {
+  const { studentId } = req.params;
+  const answers = scriptAnswerSet.findByStudentId(studentId);
+  res.json(answers);
+});
+
+
+app.put('/api/scriptAnswers/:id/grade', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { grade } = req.body;
+
+  const updated = scriptAnswerSet.updateGrade(id, grade);
+  if (!updated) return res.status(404).json({ error: 'ScriptAnswer not found' });
+
+  res.json(updated);
+});
+
+app.put('/api/scriptAnswers/:id/grade', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { grade } = req.body;
+
+  const updated = scriptAnswerSet.updateGrade(id, grade);
+  if (!updated) return res.status(404).json({ error: 'ScriptAnswer not found' });
+
+  res.json(updated);
+});
+
+app.put('/api/taskAnswers/:taskAnswerId', (req: Request, res: Response) => {
+  const { taskAnswerId } = req.params;
+
+  const updated = scriptAnswerSet.updateTaskAnswer(taskAnswerId, req.body);
+  if (!updated) {
+    return res.status(404).json({ error: 'TaskAnswer not found' });
+  }
+
+  res.json(updated);
 });
