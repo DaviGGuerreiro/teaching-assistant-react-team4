@@ -594,6 +594,19 @@ app.get('/api/scripts/answers/:id/tasks/:taskId', (req: Request, res: Response) 
   return res.status(200).json({ grade: task.grade });
 });
 
+
+// --------------------------------------------------------------
+// POST /api/scripts/answers  → Create a script answer
+// --------------------------------------------------------------
+app.post('/api/scripts/answers', (req: Request, res: Response) => {
+  try {
+    const newAnswer = scriptAnswerSet.addScriptAnswer(req.body);
+    res.status(201).json(newAnswer);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
 // --------------------------------------------------------------
 // PUT /api/scripts/answers/:id/tasks/:taskId → Update grade
 // --------------------------------------------------------------
@@ -728,15 +741,4 @@ app.put('/api/scripts/:id', (req: Request, res: Response) => {
 });
 
 
-// --------------------------------------------------------------
-// POST /api/scripts/answers  → Create a script answer
-// --------------------------------------------------------------
-app.post('/api/scripts/answers', (req: Request, res: Response) => {
-  try {
-    const newAnswer = scriptAnswerSet.addScriptAnswer(req.body);
-    res.status(201).json(newAnswer);
-  } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
-  }
-});
 
