@@ -32,7 +32,7 @@ describe("ScriptAnswer", () => {
       id: "sa1",
       student: {
         name: "John Doe",
-        cpf: "123.456.789-09", // normalized by Student class
+        cpf: "123.456.789-09",
         email: "john@example.com",
       },
       answers: [
@@ -116,5 +116,40 @@ describe("ScriptAnswer", () => {
       });
     });
 
+    // NEW TEST
+    test("getNumberOfAnswersWithGrade throws on invalid grade", () => {
+      expect(() => (script as any).getNumberOfAnswersWithGrade("INVALID"))
+        .toThrow("Invalid grade");
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // NEW TESTS: Grade validation in constructor and updateGrade()
+  // ---------------------------------------------------------------
+  describe("grade validation", () => {
+    test("constructor throws when initialized with invalid grade", () => {
+      expect(() => {
+        // @ts-expect-error intentionally invalid
+        new ScriptAnswer("bad", student, [], "INVALID");
+      }).toThrow("Invalid grade value");
+    });
+
+    test("updateGrade updates grade when valid", () => {
+      script.updateGrade("MA");
+      expect(script.grade).toBe("MA");
+
+      script.updateGrade("MPA");
+      expect(script.grade).toBe("MPA");
+
+      script.updateGrade(undefined);
+      expect(script.grade).toBeUndefined();
+    });
+
+    test("updateGrade throws on invalid grade", () => {
+      expect(() => {
+        // @ts-expect-error intentional invalid
+        script.updateGrade("WRONG");
+      }).toThrow("Invalid grade value");
+    });
   });
 });
