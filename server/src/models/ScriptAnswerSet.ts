@@ -5,7 +5,7 @@ export class ScriptAnswerSet {
 
   addScriptAnswer(data: any) {
     const newAnswer = {
-      id: uuid(),
+      id: data.id ??  uuid(),
       scriptId: data.scriptId,
       studentId: data.studentId,
       taskAnswers: data.taskAnswers ?? [],
@@ -26,7 +26,7 @@ export class ScriptAnswerSet {
   
 
   getAll() {
-    return this.scriptAnswers;
+    return this.scriptAnswers.slice()
   }
 
   findByStudentId(studentId: string) {
