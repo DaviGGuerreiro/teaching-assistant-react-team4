@@ -30,7 +30,7 @@ export class ScriptAnswerSet {
   }
 
   findByStudentId(studentId: string) {
-    return this.scriptAnswers.filter(a => a.studentId === studentId);
+    return this.getAll().filter(a => a.studentId === studentId).slice();
   }
 
   findById(id: string) {
