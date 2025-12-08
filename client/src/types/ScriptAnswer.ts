@@ -2,7 +2,7 @@ import {Grade} from './EspecificacaoDoCalculoDaMedia';
 
 export interface TaskAnswer {
     id: string;
-    taskId: string;
+    task: string;
     answer: string;
     grade?: Grade;
     comments?: string;
@@ -11,8 +11,8 @@ export interface TaskAnswer {
 export interface ScriptAnswer {
     id: string;
     scriptId: string;
-    studentId: string;
-    taskAnswers: TaskAnswer[];
+    student: string;
+    answers: TaskAnswer[];
     grade?: Grade;
 }
 
