@@ -1,22 +1,24 @@
 import { v4 as uuid } from 'uuid';
+import  { ScriptAnswer } from './ScriptAnswer';
+import { Grade } from './Evaluation';
 
 export class ScriptAnswerSet {
-  private scriptAnswers: any[] = [];
+  private scriptAnswers: ScriptAnswer[] = [];
 
   addScriptAnswer(data: any) {
-    const newAnswer = {
+    const newAnswer = ScriptAnswer.fromJSON({
       id: data.id ??  uuid(),
       scriptId: data.scriptId,
-      studentId: data.studentId,
-      taskAnswers: data.taskAnswers ?? [],
+      student: data.studentId,
+      answers: data.taskAnswers ?? [],
       grade: data.grade ?? null
-    };
+    });
     this.scriptAnswers.push(newAnswer);
     return newAnswer;
   }
 
   removeScriptAnswer(id: string) {
-    const index = this.scriptAnswers.findIndex(a => a.id === id);
+    const index = this.scriptAnswers.findIndex(a => a.getId() === id);
     if (index !== -1) {
       this.scriptAnswers.splice(index, 1);
       return true;
@@ -30,14 +32,18 @@ export class ScriptAnswerSet {
   }
 
   findByStudentId(studentId: string) {
-    return this.getAll().filter(a => a.studentId === studentId).slice();
+    return this.getAll().filter(a => a.getstudentId() === studentId).slice();
   }
 
   findById(id: string) {
-    return this.scriptAnswers.find(a => a.id === id) || null;
+    return this.scriptAnswers.find(a => a.getId() === id) || null;
   }
 
-  updateGrade(id: string, grade: string) {
+  findbyScriptId(scriptId: string) {
+    return this.getAll().filter(a => a.getScriptId() === scriptId).slice();
+  }
+
+  updateGrade(id: string, grade: Grade | undefined) {
     const answer = this.findById(id);
     if (!answer) return null;
     answer.grade = grade;
@@ -46,9 +52,9 @@ export class ScriptAnswerSet {
 
   updateTaskAnswer(taskAnswerId: string, update: any) {
     for (const scriptAnswer of this.scriptAnswers) {
-      const ta = scriptAnswer.taskAnswers.find(t => t.id === taskAnswerId);
+      const ta = scriptAnswer.answers.find(t => t.id === taskAnswerId);
       if (ta) {
-        if (update.grade !== undefined) ta.grade = update.grade;
+        if (update.grade !== undefined) ta.updateGrade(update.grade);
         if (update.comments !== undefined) ta.comments = update.comments;
         return ta;
       }
