@@ -4,12 +4,14 @@ import { Student } from "./Student";
 
 export class ScriptAnswer {
   private id: string;
-  private student: Student; 
+  private scriptId: string;
+  private student: string; 
   public answers: TaskAnswer[] = [];
   public grade?: Grade
 
-  constructor(id: string, student: Student, answers?: TaskAnswer[], grade?: Grade) {
+  constructor(id: string, scriptId: string, student: string, answers?: TaskAnswer[], grade?: Grade) {
     this.id = id;
+    this.scriptId = scriptId;
     this.student = student;
     this.answers = answers || [];
     this.grade = grade;
@@ -18,28 +20,38 @@ export class ScriptAnswer {
     }
   }
 
-
-getId(): string {
+  getId(): string {
     return this.id;
-}
+  }
 
-toJSON() {
-  return {
-    id: this.id,
-    student: this.student.toJSON(),
-    answers: this.answers.map(answer => {
-      if (answer && typeof answer.toJSON === "function") {
-        return answer.toJSON();
-      }
-      console.warn("Invalid answer detected:", answer);
-      return null;
-    }).filter(Boolean),
-    grade: this.grade ? this.grade : undefined
-  };
-}
+  getstudentId(): string {
+    return this.student;
+  }
 
+  getScriptId(): string {
+    return this.scriptId;
+  }
 
+  toJSON() {
+    return {
+      id: this.id,
+      scriptId: this.scriptId,
+      student: this.student,
+      answers: this.answers.map(answer => {
+        if (answer && typeof answer.toJSON === "function") {
+          return answer.toJSON();
+        }
+        console.warn("Invalid answer detected:", answer);
+        return null;
+      }).filter(Boolean),
+      grade: this.grade ? this.grade : undefined
+    };
+  }
 
+  static fromJSON(obj: any): ScriptAnswer {
+    const answers = obj.answers ? obj.answers.map((ansObj: any) => TaskAnswer.fromJSON(ansObj)) : [];
+    return new ScriptAnswer(obj.id, obj.scriptId, obj.student, answers, obj.grade);
+  }
 
   // answer management
 
@@ -50,8 +62,7 @@ toJSON() {
   }
 
   addAnswer(answer: TaskAnswer): TaskAnswer {
-    // Check if task already in script
-    const existingAnswer = this.findAnswerByTaskId(answer.task.getId());
+    const existingAnswer = this.findAnswerByTaskId(answer.task);
     if (existingAnswer) {
       throw new Error('Answer for task already in script');
     }
@@ -60,8 +71,7 @@ toJSON() {
     return answer;
   }
 
-  
- removeAnswer(taskId: string): boolean {
+  removeAnswer(taskId: string): boolean {
     const index = this.answers.findIndex(answer => 
       answer.getTaskId() === taskId
     );
@@ -74,9 +84,7 @@ toJSON() {
     return true;
   }
 
-
-  
-// grade Management
+  // grade Management
 
   updateGrade(grade: Grade | undefined) {
     if(grade && grade != "MA" && grade != "MPA" && grade != "MANA") {
@@ -85,23 +93,18 @@ toJSON() {
     this.grade = grade;
   }
 
- private getNumberOfAnswersWithGrade(grade : Grade): number { 
+  private getNumberOfAnswersWithGrade(grade : Grade): number { 
     if (grade !== 'MANA' && grade !== 'MPA' && grade !== 'MA') {
       throw new Error('Invalid grade');
     }
     return this.answers.filter(answer => answer.getGrade() === grade).length;
- }
+  }
 
-
-
- getGradeDistribution(): Record<Grade, number> {
+  getGradeDistribution(): Record<Grade, number> {
     return {
       'MANA': this.getNumberOfAnswersWithGrade('MANA'),
       'MPA': this.getNumberOfAnswersWithGrade('MPA'),
       'MA': this.getNumberOfAnswersWithGrade('MA'),
     };
- }
-
-
-
+  }
 }
