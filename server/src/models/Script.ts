@@ -21,7 +21,11 @@ export class Script {
     return this.title;
   }
 
-toJSON() {
+  getDescription(): string | undefined {
+    return this.description;
+  }
+
+  toJSON() {
   return {
     id: this.id,
     title: this.title,
@@ -70,8 +74,9 @@ toJSON() {
     return true;
   }
 
-  update(data: Partial<{ title: any; tasks: any }>) {
+  update(data: Partial<{ title: any; description: any; tasks: any }>) {
     if (data.title !== undefined) this.title = data.title;
+    if (data.description !== undefined) this.description = data.description;
     if (data.tasks !== undefined){
       this.tasks = data.tasks.map((t: any) => Task.fromJSON(t));
     };
