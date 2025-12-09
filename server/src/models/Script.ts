@@ -3,11 +3,13 @@ import { Task } from "./Task";
 export class Script {
   private id: string;
   public title?: string;
+  public description?: string;
   public tasks: Task[] = [];
 
-  constructor(id: string, title?: string, tasks?: Task[]) {
+  constructor(id: string, title?: string, description?: string, tasks?: Task[]) {
     this.id = id;
     this.title = title;
+    this.description = description;
     this.tasks = tasks || [];
   }
 
@@ -23,6 +25,7 @@ toJSON() {
   return {
     id: this.id,
     title: this.title,
+    description: this.description,
     tasks: this.tasks.map(task => {
       if (task && typeof task.toJSON === "function") {
         return task.toJSON();

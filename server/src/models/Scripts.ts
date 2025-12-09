@@ -13,7 +13,7 @@ addScript(data: any): Script {
   if (equalScripts) {
     throw new Error('Script with this title already exists');
   }
-  const script = new Script(id, data.title);
+  const script = new Script(id, data.title, data.description);
 
   if (Array.isArray(data.tasks)) {
     script.tasks = data.tasks.map((t: any) => Task.fromJSON(t));
