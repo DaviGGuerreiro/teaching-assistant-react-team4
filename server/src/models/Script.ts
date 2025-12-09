@@ -15,6 +15,10 @@ export class Script {
     return this.id;
   }
 
+  getTitle(): string | undefined {
+    return this.title;
+  }
+
 toJSON() {
   return {
     id: this.id,

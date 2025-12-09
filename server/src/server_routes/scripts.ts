@@ -1,12 +1,17 @@
-import { Request, Response, Express } from 'express';
+import { Express, Request, Response } from 'express';
 
 export function setupScriptRoutes(app: Express, scripts: any) {
   const scripturl = '/api/scripts/';
 
   // POST /api/scripts - Create a new script
   app.post(scripturl+'', (req: Request, res: Response) => {
+    try {
     const script = scripts.addScript(req.body);
     res.status(201).json(script.toJSON());
+  }
+  catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
   });
 
   // GET /api/scripts/:id - Get one script by ID
