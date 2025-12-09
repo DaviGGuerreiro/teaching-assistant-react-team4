@@ -2,16 +2,19 @@ import { Task } from "./Task";
 export interface Script {
   id: string;
   title?: string;
+  description?: string;
   tasks?: Task[]
 }
 
 export interface CreateScriptRequest {
   title?: string;
+  description?: string;
   tasks?: Task[];
 }
 
 export interface UpdateScriptRequest {
   title?: string;
+  description?: string;
   tasks?: Task[];
 }
 

@@ -9,11 +9,17 @@ addScript(data: any): Script {
   if (data.title === undefined || data.title.trim() === '') {
     throw new Error('Script title is required');
   }
+  if (!Array.isArray(data.tasks) || data.tasks.length === 0) {
+    throw new Error('Script must have at least one task');
+  }
+  if (data.description === undefined || data.description.trim() === '') {
+    throw new Error('Script description is required');
+  }
   const equalScripts = this.findByName(data.title);
   if (equalScripts) {
     throw new Error('Script with this title already exists');
   }
-  const script = new Script(id, data.title);
+  const script = new Script(id, data.title, data.description);
 
   if (Array.isArray(data.tasks)) {
     script.tasks = data.tasks.map((t: any) => Task.fromJSON(t));

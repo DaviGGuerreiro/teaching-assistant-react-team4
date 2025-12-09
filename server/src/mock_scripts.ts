@@ -1,9 +1,8 @@
-import { Express } from 'express';
-import { TaskSet } from './models/TaskSet';
-import { Scripts } from './models/Scripts';
 import { ScriptAnswerSet } from './models/ScriptAnswerSet';
+import { Scripts } from './models/Scripts';
 import { Task } from './models/Task';
 import { TaskAnswer } from './models/TaskAnswer';
+import { TaskSet } from './models/TaskSet';
 
 export function loadMockScriptsAndAnswers(
   taskset: TaskSet,
@@ -31,23 +30,30 @@ export function loadMockScriptsAndAnswers(
 
     // Create mock scripts if none exist
     if (scripts.getAllScripts().length === 0) {
-      const script1 = scripts.addScript(new (require('./models/Script').Script)('script-001', 'Midterm Exam - Math 101'));
       const foundTask1 = taskset.findById('task-001');
       const foundTask2 = taskset.findById('task-002');
       const foundTask3 = taskset.findById('task-003');
 
-      if (foundTask1) script1.addTask(foundTask1);
-      if (foundTask2) script1.addTask(foundTask2);
-      if (foundTask3) script1.addTask(foundTask3);
+      const script1 = scripts.addScript({
+        id: 'script-001',
+        title: 'Midterm Exam - Math 101',
+        description: 'Comprehensive midterm assessment',
+        tasks: [foundTask1, foundTask2, foundTask3].filter(Boolean)
+      });
 
-      const script2 = scripts.addScript(new (require('./models/Script').Script)('script-002', 'Final Exam - Math 101'));
-      if (foundTask1) script2.addTask(foundTask1);
-      if (foundTask2) script2.addTask(foundTask2);
-      if (foundTask3) script2.addTask(foundTask3);
+      const script2 = scripts.addScript({
+        id: 'script-002',
+        title: 'Final Exam - Math 101',
+        description: 'Final comprehensive examination',
+        tasks: [foundTask1, foundTask2, foundTask3].filter(Boolean)
+      });
 
-      const script3 = scripts.addScript(new (require('./models/Script').Script)('script-003', 'Quiz - Programming 201'));
-      if (foundTask2) script3.addTask(foundTask2);
-      if (foundTask3) script3.addTask(foundTask3);
+      const script3 = scripts.addScript({
+        id: 'script-003',
+        title: 'Quiz - Programming 201',
+        description: 'Quick assessment quiz',
+        tasks: [foundTask2, foundTask3].filter(Boolean)
+      });
 
       console.log('Mock scripts created:', [script1.getId(), script2.getId(), script3.getId()]);
     }
