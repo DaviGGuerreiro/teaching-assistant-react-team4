@@ -1,268 +1,225 @@
-import { Given, When, Then, Before, After, DataTable, setDefaultTimeout } from '@cucumber/cucumber';
-import { Browser, Page, launch } from 'puppeteer';
+// Refactored Cucumber step definitions with helpers
+// ---------------------------------------------------
+
+import { Given, When, Then, After, setDefaultTimeout, DataTable } from '@cucumber/cucumber';
 import expect from 'expect';
 
-// Set default timeout for all steps
-setDefaultTimeout(30 * 1000); // 30 seconds
+setDefaultTimeout(30 * 1000);
 
-// Helper function to format CPF like the frontend does
-function formatCPF(value: string): string {
-  const digits = value.replace(/\D/g, '');
-  if (digits.length <= 11) {
-    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  }
-  return digits.slice(0, 11).replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-}
-
-let browser: Browser;
-let page: Page;
-const baseUrl = 'http://localhost:3004';
 const serverUrl = 'http://localhost:3005';
 
-// Test data to clean up
-let testStudentCPF: string;
+// ============================================================
+// Shared test state
+// ============================================================
+let lastResponse: Response;
+let createdScriptAnswerIds: string[] = [];
+let createdStudentCPF: string | null = null;
+let lastCreatedScriptAnswerId: string | null = null;
+let mostRecentTaskId: string | null = null;
 
-Before({ tags: '@gui' }, async function () {
-  browser = await launch({ 
-    headless: false, // Set to true for CI/CD
-    slowMo: 50 // Slow down actions for visibility
+// ============================================================
+// Helper functions
+// ============================================================
+async function createScriptAnswer(id: string, studentId: string) {
+  const response = await fetch(`${serverUrl}/api/scriptanswers/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, scriptId: `script-${id}`, studentId, answers: [] })
   });
-  page = await browser.newPage();
-  await page.setViewport({ width: 1280, height: 720 });
+
+  if (response.status === 201) {
+    createdScriptAnswerIds.push(id);
+    lastCreatedScriptAnswerId = id;
+  }
+
+  lastResponse = response;
+
+  return response;
+}
+
+async function fetchJSON(endpoint: string) {
+  const res = await fetch(`${serverUrl}${endpoint}`);
+  lastResponse = res;
+  return { status: res.status, body: await res.json() };
+}
+
+function extractQuotedList(str: string): string[] {
+  return str.match(/"([^"]+)"/g)?.map(s => s.replace(/"/g, '')) || [];
+}
+
+async function updateScriptAnswerTasks(scriptAnswerId: string, taskPayload: any) {
+    const res = await fetch(`${serverUrl}/api/scriptanswers/${scriptAnswerId}/tasks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(taskPayload)
+  });
+  lastResponse = res;
+  return res;
+
+}
+
+async function ensureStudentExists(cpf: string) {
+  const response = await fetch(`${serverUrl}/api/students`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'Test Student', cpf, email: `student${cpf}@test.com` })
+  });
+
+  lastResponse = response;
+
+  if (response.status === 201) createdStudentCPF = cpf;
+  return response;
+}
+
+// ============================================================
+// Cleanup
+// ============================================================
+After({ tags: '@server' }, async function () {
+  for (const id of createdScriptAnswerIds) {
+    await fetch(`${serverUrl}/api/scriptanswers/${id}`, { method: 'DELETE' });
+  }
+  createdScriptAnswerIds = [];
+
+  if (createdStudentCPF) {
+    await fetch(`${serverUrl}/api/students/${createdStudentCPF}`, { method: 'DELETE' });
+    createdStudentCPF = null;
+  }
+
+  lastCreatedScriptAnswerId = null;
 });
 
-After({ tags: '@gui' }, async function () {
-  // Clean up test student if it exists by using the GUI delete function
-  if (testStudentCPF) {
-    try {
-      // Navigate to Students area
-      await page.goto(baseUrl);
-      await page.waitForSelector('.students-list table', { timeout: 5000 });
-      
-      // Look for our test student in the table and delete it if found
-      const studentRows = await page.$$('[data-testid^="student-row-"]');
-      for (const row of studentRows) {
-        const cpfCell = await row.$('[data-testid="student-cpf"]');
-        if (cpfCell) {
-          const cpf = await page.evaluate(el => el.textContent, cpfCell);
-          // Check for both plain and formatted CPF
-          if (cpf === testStudentCPF || cpf === formatCPF(testStudentCPF)) {
-            // Set up dialog handler before clicking delete
-            page.once('dialog', async (dialog) => {
-              console.log(`GUI cleanup: Confirming deletion dialog: ${dialog.message()}`);
-              await dialog.accept(); // Confirm deletion
-            });
-            
-            // Click the delete button for this student
-            const deleteButton = await row.$(`[data-testid="delete-student-${cpf}"]`);
-            if (deleteButton) {
-              await deleteButton.click();
-              // Wait for deletion to complete
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              console.log(`GUI cleanup: Removed test student with CPF: ${cpf}`);
-              break;
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.log('GUI cleanup: Student may not exist or GUI unavailable');
-    }
-  }
-  
-  if (browser) {
-    await browser.close();
-  }
+// ============================================================
+// Step Definitions
+// ============================================================
+
+Given(/^there (?:is a|are) script answer(?:s)?(?: registered)? with ID(?:s)? ((?:"[^"]+"\s*,\s*)*"[^"]+")$/, async function (idString: string) {
+  const ids = extractQuotedList(idString);
+  for (const id of ids) await createScriptAnswer(id, '11111111111');
 });
 
-Given('the student management system is running', async function () {
-  await page.goto(baseUrl);
-  await page.waitForSelector('h1', { timeout: 10000 });
-  const title = await page.$eval('h1', el => el.textContent);
-  expect(title || '').toContain('Teaching Assistant React');
-});
-
-Given('the server is available', async function () {
-  try {
-    const response = await fetch(`${serverUrl}/api/students`);
-    expect(response.status).toBe(200);
-  } catch (error) {
-    throw new Error('Server is not available. Make sure the backend server is running on port 3005');
-  }
-});
-
-Given('there is no student with CPF {string} in the system', async function (cpf: string) {
-  testStudentCPF = cpf;
-  const formattedCPF = formatCPF(cpf);
-  
-  // Navigate to the application and check if student exists through GUI
-  await page.goto(baseUrl);
-  await page.waitForSelector('.students-list', { timeout: 10000 });
-  
-  // Try to find and delete the student if it exists (cleanup before test)
-  const studentRows = await page.$$('[data-testid^="student-row-"]');
-  for (const row of studentRows) {
-    const cpfCell = await row.$('[data-testid="student-cpf"]');
-    if (cpfCell) {
-      const displayedCPF = await page.evaluate(el => el.textContent, cpfCell);
-      // Check for both plain and formatted CPF
-      if (displayedCPF === cpf || displayedCPF === formattedCPF) {
-        // Student exists, delete it for clean test state
-        // Set up dialog handler before clicking delete
-        page.once('dialog', async (dialog) => {
-          console.log(`GUI cleanup: Confirming deletion dialog: ${dialog.message()}`);
-          await dialog.accept(); // Confirm deletion
-        });
-        
-        const deleteButton = await row.$(`[data-testid="delete-student-${displayedCPF}"]`);
-        if (deleteButton) {
-          await deleteButton.click();
-          // Wait for deletion to complete
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          console.log(`GUI cleanup: Removed existing student with CPF: ${displayedCPF}`);
-          break;
-        }
-      }
-    }
-  }
-  
-  // Verify student doesn't exist by checking the GUI
-  await page.reload(); // Refresh to ensure clean state
-  await page.waitForSelector('.students-list', { timeout: 5000 });
-  
-  const updatedRows = await page.$$('[data-testid^="student-row-"]');
-  for (const row of updatedRows) {
-    const cpfCell = await row.$('[data-testid="student-cpf"]');
-    if (cpfCell) {
-      const displayedCPF = await page.evaluate(el => el.textContent, cpfCell);
-      if (displayedCPF === cpf || displayedCPF === formattedCPF) {
-        throw new Error(`Student with CPF ${displayedCPF} still exists in the system after cleanup`);
-      }
+Given('there are no script answers registered', async function () {
+  const res = await fetch(`${serverUrl}/api/scriptanswers/`);
+  if (res.status === 200) {
+    const list = await res.json();
+    for (const item of list) {
+      await fetch(`${serverUrl}/api/scriptanswers/${item.id}`, { method: 'DELETE' });
     }
   }
 });
 
-When('I navigate to the Students area', async function () {
-  // Click on the Students tab
-  const studentsTab = await page.$('[data-testid="students-tab"]');
-  if (studentsTab) {
-    const isActive = await page.evaluate(el => el?.classList.contains('active'), studentsTab);
-    
-    if (!isActive) {
-      await studentsTab.click();
-    }
+Given(/^there is no script answer(?: registered)? with ID "([^"]+)"/, async function (id: string) {
+  const res = await fetch(`${serverUrl}/api/scriptanswers/${id}`);
+  if (res.status === 200) {
+    await fetch(`${serverUrl}/api/scriptanswers/${id}`, { method: 'DELETE' });
   }
-  
-  // Wait for the student form to be visible
-  await page.waitForSelector('[data-testid="student-form"]', { timeout: 5000 });
+  expect((await fetch(`${serverUrl}/api/scriptanswers/${id}`)).status).toBe(404);
 });
 
-When('I provide the student information:', async function (dataTable: DataTable) {
-  const data = dataTable.rowsHash();
-  
-  // Fill in the name field using semantic ID
-  await page.waitForSelector('#name');
-  await page.click('#name');
-  await page.type('#name', data.name);
-  
-  // Fill in the CPF field using semantic ID
-  await page.click('#cpf');
-  await page.type('#cpf', data.cpf);
-  
-  // Fill in the email field using semantic ID
-  await page.click('#email');
-  await page.type('#email', data.email);
+Given('there is a student with CPF {string}', async function (cpf: string) {
+  const response = await ensureStudentExists(cpf);
+  expect(response.status).toBe(201);
 });
 
-When('I send the student information', async function () {
-  // Click the submit button using semantic test ID
-  const submitButton = await page.$('[data-testid="submit-student-button"]');
-  expect(submitButton).toBeTruthy();
-  
-  await submitButton?.click();
-  
-  // Wait for the information to be processed and student to appear
-  await new Promise(resolve => setTimeout(resolve, 2000));
+Given('this student has script answers with IDs {string}, {string}, {string}', async function (a: string, b: string, c: string) {
+  if (!createdStudentCPF) throw new Error('Student not created');
+  const ids = [a, b, c].map(x => x.replace(/"/g, ''));
+  for (const id of ids) await createScriptAnswer(id, createdStudentCPF);
 });
 
-Then('I should see {string} in the student list', async function (studentName: string) {
-  // Wait for the student list to update
-  await page.waitForSelector('.students-list table', { timeout: 10000 });
-  
-  // Find the student row that matches our test student's CPF and verify the name
-  const studentRows = await page.$$('[data-testid^="student-row-"]');
-  let foundStudent = null;
-  
-  for (const row of studentRows) {
-    const cpfCell = await row.$('[data-testid="student-cpf"]');
-    if (cpfCell) {
-      const cpf = await page.evaluate(el => el.textContent, cpfCell);
-      if (cpf === formatCPF(testStudentCPF) || cpf === testStudentCPF) {
-        foundStudent = row;
-        break;
-      }
-    }
+Given(/^this answer contains a task with ID "([^"]+)"(?: and grade "([^"]+)")?$/, async function (taskId: string, grade?: string) {
+  if (!lastCreatedScriptAnswerId) throw new Error('No script answer created');
+
+  const payload = {
+    id: `ta-${taskId}`,
+    task: taskId,
+    answer: 'Test answer',
+    grade: grade ?? null,
+    comments: ''
+  };
+
+  mostRecentTaskId = taskId;
+  const res = await updateScriptAnswerTasks(lastCreatedScriptAnswerId, payload);
+  expect([200, 201]).toContain(res.status);
+});
+
+Given('this answer does not contain a task with ID {string}', async function (taskId: string) {
+  if (!lastCreatedScriptAnswerId) throw new Error('No script answer created');
+
+  const script = await fetchJSON(`/api/scriptanswers/${lastCreatedScriptAnswerId}`);
+  script.body.answers = script.body.answers.filter((a: any) => a.task !== taskId);
+
+  await fetch(`${serverUrl}/api/scriptanswers/${lastCreatedScriptAnswerId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(script.body)
+  });
+});
+
+// ============================================================
+// Requests
+// ============================================================
+
+When('I send a GET request to {string}', async function (endpoint: string) {
+  lastResponse = await fetch(`${serverUrl}${endpoint}`);
+});
+
+When('I send a PUT request to {string} with:', async function (endpoint: string, dataTable: DataTable) {
+  const body = dataTable.rowsHash();
+  lastResponse = await fetch(`${serverUrl}${endpoint}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+});
+
+// ============================================================
+// Assertions
+// ============================================================
+
+Then(/^the server should return (\d+) "([^"]+)"$/, async function (statusCode: string, message: string) {
+  if(!lastResponse) {
+    throw new Error('No response recorded');
   }
-  
-  expect(foundStudent).toBeTruthy();
-  
-  // Verify the name matches exactly for this specific student
-  const nameCell = await foundStudent!.$('[data-testid="student-name"]');
-  const actualName = await page.evaluate(el => el.textContent, nameCell!);
-  expect(actualName).toBe(studentName);
+  expect(lastResponse).toBeDefined();
+  const code = parseInt(statusCode);
+  expect(lastResponse.status).toBe(code);
+
+  console.log(`Server responded with status ${lastResponse.status} (${message})`);
 });
 
-Then('the student should have CPF {string}', async function (expectedCPF: string) {
-  // Wait for the student list to update
-  await page.waitForSelector('.students-list table', { timeout: 10000 });
-  
-  // Find all student information from the current test student
-  const studentRows = await page.$$('[data-testid^="student-row-"]');
-  let foundStudent = null;
-  
-  // First, find the student row that matches our test CPF
-  for (const row of studentRows) {
-    const cpfCell = await row.$('[data-testid="student-cpf"]');
-    if (cpfCell) {
-      const cpf = await page.evaluate(el => el.textContent, cpfCell);
-      if (cpf === expectedCPF || cpf === testStudentCPF || cpf === formatCPF(testStudentCPF)) {
-        foundStudent = row;
-        break;
-      }
-    }
-  }
-  
-  expect(foundStudent).toBeTruthy();
-  
-  // Verify the CPF matches exactly
-  const cpfCell = await foundStudent!.$('[data-testid="student-cpf"]');
-  const actualCPF = await page.evaluate(el => el.textContent, cpfCell!);
-  expect(actualCPF).toBe(expectedCPF);
+Then('the server should return grade {string}', async function (grade: string) {
+  const body = await lastResponse.json().then(data => data.grade);
+  expect(body).toBe(grade.replace(/"/g, ''));
+})
+
+Then(/^the server should return a list containing answers ("[^"]+"\s*,\s*)*"[^"]+"/, async function (idString: string) {
+  const expected = extractQuotedList(idString);
+  const body = await lastResponse.json();
+  const returned = body.map((x: any) => x.id);
+  expected.forEach(id => expect(returned).toContain(id));
 });
 
-Then('the student should have email {string}', async function (expectedEmail: string) {
-  // Wait for the student list to update
-  await page.waitForSelector('.students-list table', { timeout: 10000 });
-  
-  // Find the student row that matches our test student's CPF
-  const studentRows = await page.$$('[data-testid^="student-row-"]');
-  let foundStudent = null;
-  
-  for (const row of studentRows) {
-    const cpfCell = await row.$('[data-testid="student-cpf"]');
-    if (cpfCell) {
-      const cpf = await page.evaluate(el => el.textContent, cpfCell);
-      if (cpf === formatCPF(testStudentCPF) || cpf === testStudentCPF) {
-        foundStudent = row;
-        break;
-      }
-    }
-  }
-  
-  expect(foundStudent).toBeTruthy();
-  
-  // Verify the email matches exactly for this specific student
-  const emailCell = await foundStudent!.$('[data-testid="student-email"]');
-  const actualEmail = await page.evaluate(el => el.textContent, emailCell!);
-  expect(actualEmail).toBe(expectedEmail);
+Then(/^the server should return the script answer with ID "([^"]+)"$/, async function (id: string) {
+  const body = await lastResponse.json();
+  expect(body.id).toBe(id);
+});
+
+Then('the server should return an empty list', async function () {
+  const body = await lastResponse.json();
+  expect(Array.isArray(body)).toBe(true);
+  expect(body.length).toBe(0);
+});
+
+
+Then(/^the server should store the comment "([^"]+)" in task "([^"]+)"$/, async function (comment: string, taskId: string) {
+  const body = await fetchJSON(`/api/scriptanswers/${lastCreatedScriptAnswerId}/`);
+  const taskComment = body.body.answers.find((a: any) => a.task === taskId)?.comments;
+  console.log(body.body.answers);
+  expect(taskComment).toBe(comment);
+
+})
+
+Then('the server should update the task grade to {string}', async function (grade: string) {
+  const body = await fetchJSON(`/api/scriptanswers/${lastCreatedScriptAnswerId}/tasks/${mostRecentTaskId}`);
+  expect(body.body.grade).toBe(grade.replace(/"/g, ''));
 });
