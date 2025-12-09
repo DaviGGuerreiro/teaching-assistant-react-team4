@@ -68,6 +68,7 @@ const ids = idstring.match(/"([^"]+)"/g)!.map(id => id.replace(/"/g, ''));
         })
       });
       
+      lastCreatedScriptAnswerId = id;
       if (response.status === 201) {
         createdScriptAnswerIds.push(id);
         console.log(`Server setup: Created script answer with ID: ${id}`);
@@ -117,6 +118,7 @@ Given('there is a student with CPF {string}', async function (cpf: string) {
 
     const get = await fetch(`${serverUrl}/api/students/${cpf}`)
     expect(get.status).toBe(200);
+    expect(response.status).toBe(201);
 
     if (response.status === 201) {
       createdStudentCPF = cpf;

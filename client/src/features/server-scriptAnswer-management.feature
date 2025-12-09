@@ -12,7 +12,7 @@ Feature: Server Script Answers Management
   # ============================================================
 
   Scenario: Retrieve all registered script answers
-    Given there are script answers registered with IDs "123", "321", "890"
+    Given there are script answers with IDs "123", "321", "890"
     When I send a GET request to "/api/scriptanswers"
     Then the server should return 200 "OK"
     And the server should return a list containing answers "123", "321", "890"
@@ -58,4 +58,27 @@ Feature: Server Script Answers Management
     And this answer does not contain a task with ID "9"
     When I send a GET request to "/api/scriptanswers/50/tasks/9"
     Then the server should return 404 "Not Found"
-    And the server should return an error message stating the task was not found
+    And the server should return an error message "task not found"
+
+# ============================================================
+  # Updating grades
+  # ============================================================
+
+  Scenario: Update grade of an existing task with a valid value
+    Given there is a script answer with ID "50"
+    And this answer contains a task with ID "3" and grade "MANA"
+    When I send a PUT request to "/api/scriptanswers/50/tasks/3" with:
+      | field | value |
+      | grade | MPA   |
+    Then the server should return 200 OK
+    And the server should update the task grade to "MPA"
+    And the server should return grade "MPA"
+
+  Scenario: Attempt to update grade with an invalid value
+    Given there is a script answer with ID "50"
+    And this answer contains a task with ID "3"
+    When I send a PUT request to "/api/scriptanswers/50/tasks/3" with:
+      | field | value |
+      | grade | AAA   |
+    Then the server should return 400 "Bad Request"
+    And the server should return an error message "invalid grade"
