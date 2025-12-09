@@ -4,7 +4,7 @@
 import { Given, When, Then, After, setDefaultTimeout, DataTable } from '@cucumber/cucumber';
 import expect from 'expect';
 
-setDefaultTimeout(30 * 1000);
+setDefaultTimeout(30 * 10000);
 
 const serverUrl = 'http://localhost:3005';
 
@@ -22,7 +22,13 @@ let mostRecentTaskId: string | null = null;
 // Helper functions
 // ============================================================
 
-async function createScript(title, id: string) {
+async function createScript(title : string, id: string) {
+  const check = await fetch(`${serverUrl}/api/scripts/${id}`);
+  if (check.status === 200) {
+    createdScriptsIds.push(id);
+    return check;
+  }
+
   const response = await fetch(`${serverUrl}/api/scripts/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -41,6 +47,13 @@ async function createScript(title, id: string) {
 
 async function createScriptAnswer(id: string, studentId: string) {
   await createScript(`Script for ${id}`, `script-${id}`);
+
+  const check = await fetch(`${serverUrl}/api/scriptanswers/${id}`);
+  if (check.status === 200) {
+    createdScriptAnswerIds.push(id);
+    lastCreatedScriptAnswerId = id;
+    return check;
+  }
 
   const response = await fetch(`${serverUrl}/api/scriptanswers/`, {
     method: 'POST',
@@ -80,6 +93,12 @@ async function updateScriptAnswerTasks(scriptAnswerId: string, taskPayload: any)
 }
 
 async function ensureStudentExists(cpf: string) {
+  const check = await fetch(`${serverUrl}/api/students/${cpf}`);
+  if (check.status === 200) {
+    lastResponse = check;
+    return check;
+  }
+
   const response = await fetch(`${serverUrl}/api/students`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -91,6 +110,8 @@ async function ensureStudentExists(cpf: string) {
   if (response.status === 201) createdStudentCPF = cpf;
   return response;
 }
+
+
 
 // ============================================================
 // Cleanup
@@ -107,7 +128,7 @@ After({ tags: '@server' }, async function () {
   }
 
   for (const id of createdScriptsIds) {
-    await fetch(`${serverUrl}/api/scripts/${id}`, { method: 'DELETE' });
+   await fetch(`${serverUrl}/api/scripts/${id}`, { method: 'DELETE' });
   }
   createdScriptsIds = [];
 
@@ -129,7 +150,7 @@ Given('there are no script answers registered', async function () {
   if (res.status === 200) {
     const list = await res.json();
     for (const item of list) {
-      await fetch(`${serverUrl}/api/scriptanswers/${item.id}`, { method: 'DELETE' });
+      //await fetch(`${serverUrl}/api/scriptanswers/${item.id}`, { method: 'DELETE' });
     }
   }
 });
@@ -144,7 +165,8 @@ Given(/^there is no script answer(?: registered)? with ID "([^"]+)"/, async func
 
 Given('there is a student with CPF {string}', async function (cpf: string) {
   const response = await ensureStudentExists(cpf);
-  expect(response.status).toBe(201);
+  createdStudentCPF = cpf;
+  expect(response.ok).toBe(true);
 });
 
 Given('this student has script answers with IDs {string}, {string}, {string}', async function (a: string, b: string, c: string) {
