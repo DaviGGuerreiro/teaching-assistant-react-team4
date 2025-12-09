@@ -9,6 +9,9 @@ addScript(data: any): Script {
   if (data.title === undefined || data.title.trim() === '') {
     throw new Error('Script title is required');
   }
+  if (data.description === undefined || data.description.trim() === '') {
+    throw new Error('Script description is required');
+  }
   const equalScripts = this.findByName(data.title);
   if (equalScripts) {
     throw new Error('Script with this title already exists');

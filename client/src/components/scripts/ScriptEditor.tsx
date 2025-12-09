@@ -26,6 +26,10 @@ export default function ScriptEditor({ script, onSave, onCancel }: ScriptEditorP
       alert("Title cannot be empty");
       return;
     }
+    if (description.trim() === "") {
+      alert("Description cannot be empty");
+      return;
+    }
     onSave({ title, description, tasks });
   };
 
