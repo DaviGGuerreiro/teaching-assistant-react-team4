@@ -94,7 +94,7 @@ export const ScriptAnswerService = {
 
   /** Get ScriptAnswers by class and student (enrollment) */
   async getScriptAnswersByEnrollment(classId: string, studentId: string): Promise<ScriptAnswer[]> {
-    const res = await fetch(`${API_URL}/scriptanswers/enrollment/${classId}/${studentId}`);
+    const res = await fetch(`${API_URL}/scriptanswers/enrollment?classId=${classId}&studentId=${studentId}`);
     if (!res.ok) throw new Error("Failed to fetch scriptAnswers by enrollment");
     return res.json();
   },
