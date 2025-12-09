@@ -107,6 +107,14 @@ Given('there are no script answers registered', async function () {
   }
 });
 
+Given('there is no script answer with ID {string}', async function (id: string) {
+  const res = await fetch(`${serverUrl}/api/scriptanswers/${id}`);
+  if (res.status === 200) {
+    await fetch(`${serverUrl}/api/scriptanswers/${id}`, { method: 'DELETE' });
+  }
+  expect((await fetch(`${serverUrl}/api/scriptanswers/${id}`)).status).toBe(404);
+});
+
 Given('there is a student with CPF {string}', async function (cpf: string) {
   const response = await ensureStudentExists(cpf);
   expect(response.status).toBe(201);
@@ -198,6 +206,13 @@ Then('the server should return an empty list', async function () {
 });
 
 
+Then(/^the server should store the comment "([^"]+)" in task "([^"]+)"$/, async function (comment: string, taskId: string) {
+  const body = await fetchJSON(`/api/scriptanswers/${lastCreatedScriptAnswerId}/`);
+  const taskComment = body.body.answers.find((a: any) => a.task === taskId)?.comments;
+  console.log(body.body.answers);
+  expect(taskComment).toBe(comment);
+
+})
 
 Then('the server should update the task grade to {string}', async function (grade: string) {
   const body = await fetchJSON(`/api/scriptanswers/${lastCreatedScriptAnswerId}/tasks/${mostRecentTaskId}`);

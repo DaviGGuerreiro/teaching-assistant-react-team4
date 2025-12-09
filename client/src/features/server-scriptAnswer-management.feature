@@ -78,3 +78,32 @@ Feature: Server Script Answers Management
       | field | value |
       | grade | AAA   |
     Then the server should return 400 "invalid grade"
+
+    
+  # ============================================================
+  # Updating task-level comments
+  # ============================================================
+
+  Scenario: Successfully add a comment to a task inside a script answer
+    Given there is a script answer with ID "50"
+    And this answer contains a task with ID "3"
+    When I send a PUT request to "/api/scriptanswers/50/tasks/3/comments" with:
+      | field   | value                                   |
+      | comment | Correto, mas poderia detalhar melhor    |
+    Then the server should return 200 "OK"
+    And the server should store the comment "Correto, mas poderia detalhar melhor" in task "3"
+
+  Scenario: Attempt to add a comment to a non-existent task inside a script answer
+    Given there is a script answer with ID "50"
+    And this answer does not contain a task with ID "999"
+    When I send a PUT request to "/api/scriptanswers/50/tasks/999/comments" with:
+      | field   | value     |
+      | comment | Verifique |
+    Then the server should return 404 "task not found"
+
+  Scenario: Attempt to add a comment to a task inside a non-existent script answer
+    Given there is no script answer with ID "888"
+    When I send a PUT request to "/api/scriptanswers/888/tasks/3/comments" with:
+      | field   | value                    |
+      | comment | Precisa revisar este ponto |
+    Then the server should return 404 "answer not found"
