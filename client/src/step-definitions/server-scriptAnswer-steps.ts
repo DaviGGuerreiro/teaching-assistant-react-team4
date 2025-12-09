@@ -107,7 +107,7 @@ Given('there are no script answers registered', async function () {
   }
 });
 
-Given('there is no script answer with ID {string}', async function (id: string) {
+Given(/^there is no script answer(?: registered)? with ID "([^"]+)"/, async function (id: string) {
   const res = await fetch(`${serverUrl}/api/scriptanswers/${id}`);
   if (res.status === 200) {
     await fetch(`${serverUrl}/api/scriptanswers/${id}`, { method: 'DELETE' });
@@ -197,6 +197,11 @@ Then(/^the server should return a list containing answers ("[^"]+"\s*,\s*)*"[^"]
   const body = await lastResponse.json();
   const returned = body.map((x: any) => x.id);
   expected.forEach(id => expect(returned).toContain(id));
+});
+
+Then(/^the server should return the script answer with ID "([^"]+)"$/, async function (id: string) {
+  const body = await lastResponse.json();
+  expect(body.id).toBe(id);
 });
 
 Then('the server should return an empty list', async function () {

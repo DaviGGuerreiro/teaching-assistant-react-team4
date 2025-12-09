@@ -22,7 +22,22 @@ Feature: Server Script Answers Management
     When I send a GET request to "/api/scriptanswers"
     Then the server should return 200 "OK"
     And the server should return an empty list
+    
 
+  # ============================================================
+  # Retrieval by ID
+  # ============================================================
+
+  Scenario: Retrieve a script answer by ID
+    Given there is a script answer registered with ID "123"
+    When I send a GET request to "/api/scriptanswers/123"
+    Then the server should return 200 "OK"
+    And the server should return the script answer with ID "123"
+
+  Scenario: Attempt to retrieve a non-existent script answer
+    Given there is no script answer registered with ID "777"
+    When I send a GET request to "/api/scriptanswers/777"
+    Then the server should return 404 "script not found"
 
   # ============================================================
   # Retrieval by student (CPF-based)
@@ -107,3 +122,4 @@ Feature: Server Script Answers Management
       | field   | value                    |
       | comment | Precisa revisar este ponto |
     Then the server should return 404 "answer not found"
+
