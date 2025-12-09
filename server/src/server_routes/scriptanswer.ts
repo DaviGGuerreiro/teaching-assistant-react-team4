@@ -109,7 +109,7 @@ export function setupScriptAnswerRoutes(app: Express, scriptAnswerSet: any, stud
 
 app.post(scriptAnswerurl+'', (req: Request, res: Response) => {
   try {
-    const { scriptId, classId, studentId } = req.body;
+    const { id, scriptId, classId, studentId } = req.body;
     if (!scriptId || !classId || !studentId) {
       return res.status(400).json({ error: 'scriptId, classId and studentId are required' });
     }
@@ -137,6 +137,7 @@ app.post(scriptAnswerurl+'', (req: Request, res: Response) => {
       });
     }
     const newAnswer = scriptAnswerSet.addScriptAnswer({
+      id,
       scriptId,
       classId,
       studentId,

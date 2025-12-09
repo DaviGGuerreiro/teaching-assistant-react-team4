@@ -7,7 +7,6 @@ import { Classes } from './models/Classes';
 import { Class } from './models/Class';
 import { Report } from './models/Report';
 import { Scripts } from './models/Scripts';
-import { ScriptResponseSet } from './models/ScriptResponseSet';
 import * as fs from 'fs';
 import * as path from 'path';
 import { EspecificacaoDoCalculoDaMedia, DEFAULT_ESPECIFICACAO_DO_CALCULO_DA_MEDIA } from './models/EspecificacaoDoCalculoDaMedia';

@@ -23,7 +23,7 @@ export class ScriptAnswerSet {
       throw new Error(`Script with ID ${data.scriptId} not found`);
     }
     const newAnswer = ScriptAnswer.fromJSON({
-      id: data.id ??  uuid(),
+      id: data.id ?? uuid(),
       scriptId: data.scriptId,
       classId: data.classId,
       student: data.studentId,
