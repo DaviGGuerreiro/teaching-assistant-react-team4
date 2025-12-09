@@ -170,7 +170,7 @@ app.post(scriptAnswerurl+'', (req: Request, res: Response) => {
         comments,
       });
       if (!ta) {
-        return res.status(404).json({ error: 'Answer already exists in ScriptAnswer' });
+        return res.status(409).json({ error: 'Task answer already exists for this task' });
       }
       saveCallback?.();
       res.status(201).json(ta.toJSON());
@@ -182,23 +182,38 @@ app.post(scriptAnswerurl+'', (req: Request, res: Response) => {
   // POST /api/scriptanswers/:id/tasks/:taskId/submit → submit an answer on the scriptAnswer
 
   app.post(scriptAnswerurl+':id/tasks/:taskId/submit', (req: Request, res: Response) => {
-  try {
-    const { id, taskId } = req.params;
-    const { answer, grade, comments } = req.body;
-    const ta = scriptAnswerSet.submitLastTaskAnswer(id, taskId, scripts, {
-      answer,
-      grade,
-      comments,
-    });
-    if (!ta) {
-      return res.status(404).json({ error: 'ScriptAnswer or Task not found' });
+    try {
+      const { id, taskId } = req.params;
+      const { answer, grade, comments } = req.body;
+
+      const scriptAnswer = scriptAnswerSet.findById(id);
+      if (!scriptAnswer) {
+        return res.status(404).json({ error: 'ScriptAnswer not found' });
+      }
+
+      const existingTask = scriptAnswer.findAnswerByTaskId(taskId);
+      if (!existingTask) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      if (existingTask.status === 'submitted') {
+        return res.status(409).json({ error: 'Task answer already submitted and cannot be changed' });
+      }
+
+      const ta = scriptAnswerSet.submitLastTaskAnswer(id, taskId, scripts, {
+        answer,
+        grade,
+        comments,
+      });
+      if (!ta) {
+        return res.status(404).json({ error: 'ScriptAnswer or Task not found' });
+      }
+      saveCallback?.();
+      res.status(200).json(ta.toJSON());
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
     }
-    saveCallback?.();
-    res.json(ta.toJSON());
-  } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
-  }
-});
+  });
 
 // POST /api/scriptanswers/:id/timeout → Marca roteiro como expirado por timeout
 app.post(scriptAnswerurl+':id/timeout', (req: Request, res: Response) => {
@@ -211,7 +226,7 @@ app.post(scriptAnswerurl+':id/timeout', (req: Request, res: Response) => {
     }
     sa.checkAndMarkIfTimedOut(timeoutSeconds);
     saveCallback?.();
-    res.json({
+    res.status(200).json({
       message: 'Timeout check completed',
       scriptAnswer: sa.toJSON(),
     });
