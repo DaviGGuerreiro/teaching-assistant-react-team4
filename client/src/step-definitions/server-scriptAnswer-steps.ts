@@ -179,7 +179,7 @@ Given(/^this answer contains a task with ID "([^"]+)"(?: and grade "([^"]+)")?$/
   if (!lastCreatedScriptAnswerId) throw new Error('No script answer created');
 
   const payload = {
-    id: `ta-${taskId}`,
+    id: `${taskId}`,
     task: taskId,
     answer: 'Test answer',
     grade: grade ?? null,
