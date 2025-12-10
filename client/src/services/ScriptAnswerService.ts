@@ -46,7 +46,10 @@ export const ScriptAnswerService = {
       body: JSON.stringify(data)
     });
 
-    if (!res.ok) throw new Error("Failed to create ScriptAnswer");
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to create ScriptAnswer (status ${res.status})`);
+    }
     return res.json();
   },
 
@@ -95,7 +98,10 @@ export const ScriptAnswerService = {
   /** Get ScriptAnswers by class and student (enrollment) */
   async getScriptAnswersByEnrollment(classId: string, studentId: string): Promise<ScriptAnswer[]> {
     const res = await fetch(`${API_URL}/scriptanswers/enrollment?classId=${classId}&studentId=${studentId}`);
-    if (!res.ok) throw new Error("Failed to fetch scriptAnswers by enrollment");
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to fetch scriptAnswers by enrollment (status ${res.status})`);
+    }
     return res.json();
   },
 
