@@ -150,7 +150,7 @@ Given('there are no script answers registered', async function () {
   if (res.status === 200) {
     const list = await res.json();
     for (const item of list) {
-      //await fetch(`${serverUrl}/api/scriptanswers/${item.id}`, { method: 'DELETE' });
+      await fetch(`${serverUrl}/api/scriptanswers/${item.id}`, { method: 'DELETE' });
     }
   }
 });
